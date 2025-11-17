@@ -17,7 +17,8 @@ export async function PUT(req: NextRequest) {
     const updatedUser = await prisma.user.update({
       where: { email: session.user.email },
       data: {
-        name: `${firstName} ${lastName}`,
+        firstName,
+        lastName,
         email,
       },
     })
@@ -25,7 +26,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({
       message: 'Profile updated successfully',
       user: {
-        name: updatedUser.name,
+        name: `${updatedUser.firstName} ${updatedUser.lastName}`,
         email: updatedUser.email,
       },
     })
