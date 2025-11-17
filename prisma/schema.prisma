@@ -539,17 +539,3 @@ model StaffActivity {
   @@index([module])
   @@index([createdAt])
 }
-
-model EmailTemplate {
-  id          String   @id @default(cuid())
-  name        String
-  type        String   @unique // WELCOME, INVOICE_CREATED, INVOICE_PAID, etc.
-  subject     String
-  body        String   // Email body with variable placeholders
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  @@index([type])
-  @@index([isActive])
-}
