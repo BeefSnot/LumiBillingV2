@@ -136,7 +136,7 @@ export class ProvisioningService {
             apiUrl: service.product.server.apiUrl,
             apiKey: service.product.server.apiKey || ''
           })
-          const vfServerId = parseInt(service.externalId || '0')
+          const vfServerId = parseInt((service as any).externalId || '0')
           if (vfServerId) {
             await vfClient.suspendServer(vfServerId)
           }
@@ -146,7 +146,7 @@ export class ProvisioningService {
             apiUrl: service.product.server.apiUrl,
             apiKey: service.product.server.apiKey || ''
           })
-          const ptServerId = parseInt(service.externalId || '0')
+          const ptServerId = parseInt((service as any).externalId || '0')
           if (ptServerId) {
             await ptClient.suspendServer(ptServerId)
           }
@@ -207,7 +207,7 @@ export class ProvisioningService {
             apiUrl: service.product.server.apiUrl,
             apiKey: service.product.server.apiKey || ''
           })
-          const vfServerId = parseInt(service.externalId || '0')
+          const vfServerId = parseInt((service as any).externalId || '0')
           if (vfServerId) {
             await vfClient.unsuspendServer(vfServerId)
           }
@@ -217,7 +217,7 @@ export class ProvisioningService {
             apiUrl: service.product.server.apiUrl,
             apiKey: service.product.server.apiKey || ''
           })
-          const ptServerId = parseInt(service.externalId || '0')
+          const ptServerId = parseInt((service as any).externalId || '0')
           if (ptServerId) {
             await ptClient.unsuspendServer(ptServerId)
           }
@@ -277,7 +277,7 @@ export class ProvisioningService {
             apiUrl: service.product.server.apiUrl,
             apiKey: service.product.server.apiKey || ''
           })
-          const vfServerId = parseInt(service.externalId || '0')
+          const vfServerId = parseInt((service as any).externalId || '0')
           if (vfServerId) {
             await vfClient.terminateServer(vfServerId)
           }
@@ -287,7 +287,7 @@ export class ProvisioningService {
             apiUrl: service.product.server.apiUrl,
             apiKey: service.product.server.apiKey || ''
           })
-          const ptServerId = parseInt(service.externalId || '0')
+          const ptServerId = parseInt((service as any).externalId || '0')
           if (ptServerId) {
             await ptClient.deleteServer(ptServerId, true)
           }
