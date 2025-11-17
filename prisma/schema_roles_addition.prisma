@@ -1,0 +1,40 @@
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  permissions String   // JSON array of permissions
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  users       User[]
+  
+  @@index([name])
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  module      String   // clients, invoices, services, tickets, products, servers, etc.
+  action      String   // view, create, edit, delete, manage
+  description String?
+  createdAt   DateTime @default(now())
+  
+  @@unique([module, action])
+  @@index([module])
+}
+
+model StaffActivity {
+  id          String   @id @default(cuid())
+  staffId     String
+  staffEmail  String
+  action      String
+  module      String
+  details     String?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+  
+  @@index([staffId])
+  @@index([module])
+  @@index([createdAt])
+}

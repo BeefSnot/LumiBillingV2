@@ -1,0 +1,555 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  firstName     String
+  lastName      String
+  company       String?
+  phone         String?
+  address       String?
+  address2      String?
+  city          String?
+  state         String?
+  postalCode    String?
+  country       String?
+  vatNumber     String?
+  timezone      String?   @default("UTC")
+  language      String?   @default("en")
+  avatar        String?
+  role          String    @default("CLIENT") // ADMIN, CLIENT, STAFF
+  roleId        String?
+  emailVerified Boolean   @default(false)
+  verificationToken String?
+  resetToken    String?
+  resetTokenExpiry DateTime?
+  balance       Float     @default(0)
+  isActive      Boolean   @default(true)
+  lastLogin     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  services      Service[]
+  invoices      Invoice[]
+  tickets       Ticket[]
+  assignedTickets Ticket[] @relation("AssignedTickets")
+  transactions  Transaction[]
+  orders        Order[]
+  domains       Domain[]
+  staffRole     Role?     @relation(fields: [roleId], references: [id])
+  ticketReplies TicketReply[]
+  
+  @@index([roleId])
+  @@index([role])
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  type        String      // HOSTING, VPS, GAME_SERVER, OTHER
+  price       Float
+  billingCycle String     // MONTHLY, QUARTERLY, ANNUALLY
+  setupFee    Float       @default(0)
+  diskSpace   Int?        // GB
+  bandwidth   Int?        // GB
+  ram         Int?        // GB
+  cpu         Int?        // Cores
+  active      Boolean     @default(true)
+  serverId    String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  services    Service[]
+  server      Server?     @relation(fields: [serverId], references: [id])
+  
+  @@index([type])
+  @@index([active])
+}
+
+model Server {
+  id          String      @id @default(cuid())
+  name        String
+  hostname    String
+  ipAddress   String
+  type        String      // DIRECTADMIN, VIRTFUSION, PTERODACTYL
+  apiKey      String?
+  apiUrl      String
+  username    String?
+  password    String?
+  apiVersion  String?     @default("v2") // For DirectAdmin: v1 or v2
+  maxAccounts Int         @default(0)
+  active      Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  products    Product[]
+  services    Service[]
+  
+  @@index([type])
+  @@index([active])
+}
+
+model Service {
+  id              String        @id @default(cuid())
+  userId          String
+  productId       String
+  serverId        String?
+  domain          String?
+  username        String?
+  password        String?
+  status          String        @default("PENDING") // PENDING, ACTIVE, SUSPENDED, CANCELLED, TERMINATED
+  nextDueDate     DateTime
+  recurringAmount Float
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  user            User          @relation(fields: [userId], references: [id])
+  product         Product       @relation(fields: [productId], references: [id])
+  server          Server?       @relation(fields: [serverId], references: [id])
+  provisions      Provision[]
+  
+  @@index([userId])
+  @@index([status])
+  @@index([nextDueDate])
+}
+
+model Invoice {
+  id          String        @id @default(cuid())
+  userId      String
+  invoiceNumber String      @unique
+  status      String        @default("UNPAID") // UNPAID, PAID, CANCELLED, REFUNDED
+  subtotal    Float
+  tax         Float         @default(0)
+  total       Float
+  dueDate     DateTime
+  paidDate    DateTime?
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  user        User          @relation(fields: [userId], references: [id])
+  items       InvoiceItem[]
+  transactions Transaction[]
+  
+  @@index([userId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  description String
+  amount      Float
+  quantity    Int      @default(1)
+  createdAt   DateTime @default(now())
+  
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  
+  @@index([invoiceId])
+}
+
+model Transaction {
+  id            String   @id @default(cuid())
+  userId        String
+  invoiceId     String?
+  amount        Float
+  gateway       String   // stripe, manual, etc
+  transactionId String?  @unique
+  description   String?
+  createdAt     DateTime @default(now())
+  
+  user          User     @relation(fields: [userId], references: [id])
+  invoice       Invoice? @relation(fields: [invoiceId], references: [id])
+  
+  @@index([userId])
+  @@index([invoiceId])
+}
+
+model Ticket {
+  id          String         @id @default(cuid())
+  userId      String
+  subject     String
+  status      String         @default("OPEN") // OPEN, IN_PROGRESS, WAITING_CUSTOMER, RESOLVED, CLOSED
+  priority    String         @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  departmentId String?
+  assignedTo  String?        // Staff member assigned to this ticket
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  
+  user        User           @relation(fields: [userId], references: [id])
+  department  Department?    @relation(fields: [departmentId], references: [id])
+  assignedStaff User?        @relation("AssignedTickets", fields: [assignedTo], references: [id])
+  replies     TicketReply[]
+  
+  @@index([userId])
+  @@index([status])
+  @@index([priority])
+  @@index([assignedTo])
+}
+
+model TicketReply {
+  id        String   @id @default(cuid())
+  ticketId  String
+  userId    String
+  message   String
+  isStaff   Boolean  @default(false)
+  attachments String? // JSON array of file paths
+  createdAt DateTime @default(now())
+  
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+  
+  @@index([ticketId])
+  @@index([userId])
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  email       String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  
+  tickets     Ticket[]
+}
+
+model Provision {
+  id        String          @id @default(cuid())
+  serviceId String
+  status    String          @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  attempts  Int             @default(0)
+  error     String?
+  data      String?         // JSON data for provisioning
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  
+  service   Service         @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  
+  @@index([serviceId])
+  @@index([status])
+}
+
+model Settings {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+  
+  @@index([key])
+}
+
+model Coupon {
+  id            String    @id @default(cuid())
+  code          String    @unique
+  description   String?
+  type          String    // PERCENTAGE, FIXED
+  value         Float
+  maxUses       Int       @default(0)
+  usedCount     Int       @default(0)
+  validFrom     DateTime  @default(now())
+  validUntil    DateTime?
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  
+  orders        Order[]
+  
+  @@index([code])
+  @@index([active])
+}
+
+model GiftCard {
+  id            String    @id @default(cuid())
+  code          String    @unique
+  balance       Float
+  initialBalance Float
+  active        Boolean   @default(true)
+  expiresAt     DateTime?
+  redeemedBy    String?
+  redeemedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  
+  @@index([code])
+  @@index([active])
+}
+
+model Order {
+  id          String    @id @default(cuid())
+  userId      String
+  productId   String
+  couponId    String?
+  status      String    @default("PENDING") // PENDING, COMPLETED, CANCELLED
+  amount      Float
+  discount    Float     @default(0)
+  total       Float
+  createdAt   DateTime  @default(now())
+  
+  user        User      @relation(fields: [userId], references: [id])
+  coupon      Coupon?   @relation(fields: [couponId], references: [id])
+  
+  @@index([userId])
+  @@index([status])
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  to        String
+  subject   String
+  body      String
+  sent      Boolean  @default(false)
+  error     String?
+  createdAt DateTime @default(now())
+  sentAt    DateTime?
+  
+  @@index([to])
+  @@index([sent])
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  type        String   @default("INFO") // INFO, WARNING, MAINTENANCE, UPDATE
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([isPublished])
+  @@index([createdAt])
+}
+
+model Domain {
+  id          String    @id @default(cuid())
+  userId      String
+  name        String    @unique
+  registrar   String?
+  status      String    @default("ACTIVE") // ACTIVE, EXPIRED, TRANSFERRING, CANCELLED
+  registeredAt DateTime @default(now())
+  expiresAt   DateTime
+  autoRenew   Boolean   @default(true)
+  price       Float
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  user        User      @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  userEmail   String?
+  action      String   // CREATE, UPDATE, DELETE, LOGIN, LOGOUT, etc
+  entity      String   // USER, SERVICE, INVOICE, PRODUCT, etc
+  entityId    String?
+  details     String?  // JSON string with details
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([action])
+  @@index([entity])
+  @@index([createdAt])
+}
+
+model Analytics {
+  id          String   @id @default(cuid())
+  date        DateTime @default(now())
+  metric      String   // revenue, signups, cancellations, etc
+  value       Float
+  metadata    String?  // JSON string with additional data
+  
+  @@index([date])
+  @@index([metric])
+}
+
+model Affiliate {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  referralCode    String    @unique
+  commissionRate  Float     @default(10) // percentage
+  totalEarnings   Float     @default(0)
+  pendingEarnings Float     @default(0)
+  paidEarnings    Float     @default(0)
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  referrals       Referral[]
+  payouts         AffiliatePayout[]
+  
+  @@index([referralCode])
+  @@index([userId])
+}
+
+model Referral {
+  id          String    @id @default(cuid())
+  affiliateId String
+  userId      String
+  orderId     String?
+  commission  Float     @default(0)
+  status      String    @default("PENDING") // PENDING, APPROVED, PAID
+  createdAt   DateTime  @default(now())
+  
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
+  
+  @@index([affiliateId])
+  @@index([userId])
+  @@index([status])
+}
+
+model AffiliatePayout {
+  id          String    @id @default(cuid())
+  affiliateId String
+  amount      Float
+  method      String    // PAYPAL, BANK_TRANSFER, etc
+  status      String    @default("PENDING") // PENDING, PROCESSING, COMPLETED
+  notes       String?
+  createdAt   DateTime  @default(now())
+  paidAt      DateTime?
+  
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
+  
+  @@index([affiliateId])
+  @@index([status])
+}
+
+model KnowledgeBase {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  content     String
+  category    String
+  isPublished Boolean   @default(true)
+  views       Int       @default(0)
+  helpful     Int       @default(0)
+  notHelpful  Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([category])
+  @@index([isPublished])
+  @@index([slug])
+}
+
+model TaxRate {
+  id          String   @id @default(cuid())
+  country     String
+  state       String?
+  rate        Float    // percentage
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  
+  @@index([country])
+  @@index([isActive])
+}
+
+model EmailTemplate {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  subject     String
+  body        String   // HTML content
+  variables   String?  // JSON array of available variables
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([name])
+}
+
+model Notification {
+  id          String    @id @default(cuid())
+  userId      String
+  title       String
+  message     String
+  type        String    @default("INFO") // INFO, SUCCESS, WARNING, ERROR
+  isRead      Boolean   @default(false)
+  link        String?
+  createdAt   DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // REVENUE, CLIENTS, SERVICES, etc
+  dateFrom    DateTime
+  dateTo      DateTime
+  data        String   // JSON data
+  generatedBy String
+  createdAt   DateTime @default(now())
+  
+  @@index([type])
+  @@index([generatedBy])
+  @@index([createdAt])
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  permissions String   // JSON array of permissions
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  users       User[]
+  
+  @@index([name])
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  module      String   // clients, invoices, services, tickets, products, servers, etc.
+  action      String   // view, create, edit, delete, manage
+  description String?
+  createdAt   DateTime @default(now())
+  
+  @@unique([module, action])
+  @@index([module])
+}
+
+model StaffActivity {
+  id          String   @id @default(cuid())
+  staffId     String
+  staffEmail  String
+  action      String
+  module      String
+  details     String?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+  
+  @@index([staffId])
+  @@index([module])
+  @@index([createdAt])
+}
+
+model EmailTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   @unique // WELCOME, INVOICE_CREATED, INVOICE_PAID, etc.
+  subject     String
+  body        String   // Email body with variable placeholders
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([type])
+  @@index([isActive])
+}
