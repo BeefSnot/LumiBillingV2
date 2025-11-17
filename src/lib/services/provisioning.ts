@@ -120,11 +120,12 @@ export class ProvisioningService {
     try {
       switch (service.product.server.type) {
         case 'DIRECTADMIN':
+          const apiVersion = service.product.server.apiVersion === 'v1' ? 'v1' : 'v2'
           const daClient = new DirectAdminClient({
             apiUrl: service.product.server.apiUrl,
             username: service.product.server.username || '',
             password: service.product.server.password || '',
-            apiVersion: service.product.server.apiVersion || 'v2'
+            apiVersion,
           })
           if (service.username) {
             await daClient.suspendAccount(service.username)
@@ -190,11 +191,12 @@ export class ProvisioningService {
     try {
       switch (service.product.server.type) {
         case 'DIRECTADMIN':
+          const apiVersion = service.product.server.apiVersion === 'v1' ? 'v1' : 'v2'
           const daClient = new DirectAdminClient({
             apiUrl: service.product.server.apiUrl,
             username: service.product.server.username || '',
             password: service.product.server.password || '',
-            apiVersion: service.product.server.apiVersion || 'v2'
+            apiVersion,
           })
           if (service.username) {
             await daClient.unsuspendAccount(service.username)
@@ -316,11 +318,12 @@ export class ProvisioningService {
 
   private async provisionDirectAdmin(service: any) {
     const server = service.product.server
+    const apiVersion = server.apiVersion === 'v1' ? 'v1' : 'v2'
     const client = new DirectAdminClient({
       apiUrl: server.apiUrl,
       username: server.username || '',
       password: server.password || '',
-      apiVersion: server.apiVersion || 'v2'
+      apiVersion,
     })
     const username = service.username || `user_${Date.now()}`
     const password = service.password || this.generatePassword()
