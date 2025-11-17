@@ -97,7 +97,7 @@ export async function GET(req: NextRequest) {
       where: { id: invoice.id },
       data: {
         status: 'PAID',
-        paidAt: new Date(),
+        paidDate: new Date(),
         paymentMethod: 'PAYPAL',
         paymentGatewayTransactionId: capture.id,
       },

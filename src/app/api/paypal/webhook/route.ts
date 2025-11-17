@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
           where: { id: invoice.id },
           data: {
             status: 'PAID',
-            paidAt: new Date(resource.create_time),
+            paidDate: new Date(resource.create_time),
             paymentMethod: 'PAYPAL',
             paymentGatewayTransactionId: resource.id,
           },

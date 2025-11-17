@@ -122,7 +122,7 @@ export async function PUT(req: NextRequest) {
       where: { id: invoiceId },
       data: {
         status,
-        paidAt: status === 'PAID' ? new Date() : null,
+        paidDate: status === 'PAID' ? new Date() : null,
       }
     })
 
@@ -133,9 +133,8 @@ export async function PUT(req: NextRequest) {
           userId: invoice.userId,
           invoiceId: invoice.id,
           amount: invoice.total,
-          type: 'PAYMENT',
-          status: 'COMPLETED',
           gateway: 'MANUAL',
+          description: `Manual payment for invoice ${invoice.invoiceNumber}`,
         }
       })
     }

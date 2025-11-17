@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
           where: { id: invoiceId },
           data: {
             status: 'PAID',
-            paidAt: new Date(),
+            paidDate: new Date(),
           },
           include: {
             user: true,
@@ -47,10 +47,9 @@ export async function POST(req: NextRequest) {
             userId,
             invoiceId,
             amount: invoice.total,
-            type: 'PAYMENT',
-            status: 'COMPLETED',
             gateway: 'STRIPE',
             transactionId: session.payment_intent as string,
+            description: `Stripe payment for invoice ${invoice.invoiceNumber}`,
           }
         })
 
