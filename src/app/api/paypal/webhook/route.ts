@@ -91,16 +91,26 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ received: true })
         }
 
-        // Update invoice
-        await prisma.invoice.update({
-          where: { id: invoice.id },
-          data: {
-            status: 'PAID',
-            paidDate: new Date(resource.create_time),
-            paymentMethod: 'PAYPAL',
-            paymentGatewayTransactionId: resource.id,
-          },
-        })
+        // Update invoice and record a transaction
+        await prisma.$transaction([
+          prisma.invoice.update({
+            where: { id: invoice.id },
+            data: {
+              status: 'PAID',
+              paidDate: new Date(resource.create_time),
+            },
+          }),
+          prisma.transaction.create({
+            data: {
+              userId: invoice.userId,
+              invoiceId: invoice.id,
+              amount: invoice.total,
+              gateway: 'PAYPAL',
+              transactionId: resource.id,
+              description: `PayPal webhook event ${resource.status}`,
+            },
+          }),
+        ])
 
         // Log audit event
         await createAuditLog({

@@ -130,14 +130,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Store PayPal order ID in invoice
-    await prisma.invoice.update({
-      where: { id: invoice.id },
-      data: {
-        paymentMethod: 'PAYPAL',
-        paymentGatewayOrderId: orderData.id,
-      },
-    })
+    // If you need to store order metadata, add a dedicated table/field. For now we only return the order info to the client.
 
     return NextResponse.json({
       orderId: orderData.id,

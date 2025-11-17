@@ -92,16 +92,26 @@ export async function GET(req: NextRequest) {
     // Get capture details
     const capture = captureData.purchase_units[0].payments.captures[0]
 
-    // Update invoice status
-    await prisma.invoice.update({
-      where: { id: invoice.id },
-      data: {
-        status: 'PAID',
-        paidDate: new Date(),
-        paymentMethod: 'PAYPAL',
-        paymentGatewayTransactionId: capture.id,
-      },
-    })
+    // Update invoice status and create a transaction record
+    await prisma.$transaction([
+      prisma.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          status: 'PAID',
+          paidDate: new Date(),
+        },
+      }),
+      prisma.transaction.create({
+        data: {
+          userId: invoice.userId,
+          invoiceId: invoice.id,
+          amount: invoice.total,
+          gateway: 'PAYPAL',
+          transactionId: capture.id,
+          description: `PayPal capture for invoice ${invoice.invoiceNumber}`,
+        },
+      }),
+    ])
 
     // Log audit event
     await createAuditLog({
