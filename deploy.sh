@@ -105,7 +105,7 @@ echo ""
 echo "Step 3: Installing dependencies..."
 echo "-----------------------------------"
 
-npm install --production
+npm install
 print_success "Dependencies installed"
 
 echo ""
