@@ -103,6 +103,7 @@ model Service {
   userId          String
   productId       String
   serverId        String?
+  externalId      String?
   domain          String?
   username        String?
   password        String?

@@ -364,11 +364,14 @@ export class ProvisioningService {
       ipv6: 0
     })
 
+    // Attempt to save the provider's server id to the service.externalId if returned
+    const vfId = result?.id || result?.data?.id || result?.server_id || result?.server?.id
     await prisma.service.update({
       where: { id: service.id },
       data: {
         username: 'root',
-        password
+        password,
+        externalId: vfId ? String(vfId) : undefined
       }
     })
 
@@ -415,10 +418,13 @@ export class ProvisioningService {
       }
     })
 
+    // Save the Pterodactyl server id if returned
+    const ptId = createdServer?.attributes?.id || createdServer?.data?.id || createdServer?.id
     await prisma.service.update({
       where: { id: service.id },
       data: {
-        username: user.attributes.username
+        username: user.attributes.username,
+        externalId: ptId ? String(ptId) : undefined
       }
     })
 
