@@ -1,42 +1,35 @@
-'use client'
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
+import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
-export default function VerifyEmailPage() {
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
-  const [message, setMessage] = useState('')
+export default async function VerifyEmailPage({ searchParams }: { searchParams: any }) {
+  const token = (searchParams && (searchParams.get ? searchParams.get('token') : searchParams.token)) || ''
+  let status: 'loading' | 'success' | 'error' = 'loading'
+  let message = ''
 
-  useEffect(() => {
-    const token = searchParams?.get('token')
-    
-    if (!token) {
-      setStatus('error')
-      setMessage('Invalid verification link')
-      return
+  if (!token) {
+    status = 'error'
+    message = 'Invalid verification link'
+  } else {
+    try {
+      const base = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+      const res = await fetch(`${base}/api/auth/verify-email?token=${encodeURIComponent(token)}`, { cache: 'no-store' })
+      const data = await res.json()
+      if (res.ok) {
+        status = 'success'
+        message = data.message
+      } else {
+        status = 'error'
+        message = data.error || 'Verification failed'
+      }
+    } catch (err) {
+      status = 'error'
+      message = 'An error occurred during verification'
     }
-
-    fetch(`/api/auth/verify-email?token=${token}`)
-      .then(async (res) => {
-        const data = await res.json()
-        if (res.ok) {
-          setStatus('success')
-          setMessage(data.message)
-        } else {
-          setStatus('error')
-          setMessage(data.error || 'Verification failed')
-        }
-      })
-      .catch(() => {
-        setStatus('error')
-        setMessage('An error occurred during verification')
-      })
-  }, [searchParams])
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-lumi-blue-50 to-white p-4">
@@ -80,14 +73,14 @@ export default function VerifyEmailPage() {
         </CardHeader>
         <CardContent>
           {status === 'success' && (
-            <Button onClick={() => router.push('/login')} className="w-full">
-              Go to Login
-            </Button>
+            <Link href="/login">
+              <Button className="w-full">Go to Login</Button>
+            </Link>
           )}
           {status === 'error' && (
-            <Button onClick={() => router.push('/register')} variant="outline" className="w-full">
-              Back to Register
-            </Button>
+            <Link href="/register">
+              <Button variant="outline" className="w-full">Back to Register</Button>
+            </Link>
           )}
         </CardContent>
       </Card>
