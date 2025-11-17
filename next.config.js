@@ -21,6 +21,14 @@ const nextConfig = {
   reactStrictMode: true,
   // Output standalone for smaller builds
   output: 'standalone',
+  // Don't fail build on ESLint warnings
+  eslint: {
+    ignoreDuringBuilds: false,
+    dirs: ['src'],
+  },
+  typescript: {
+    ignoreBuildErrors: false,
+  },
 }
 
 module.exports = nextConfig
