@@ -27,7 +27,19 @@ export const SQLITE_PRAGMAS = [
 export async function optimizeSQLite(prisma: any) {
   try {
     for (const pragma of SQLITE_PRAGMAS) {
-      await prisma.$executeRawUnsafe(pragma)
+      try {
+        // Some PRAGMA statements return a result set in SQLite and will cause
+        // $executeRawUnsafe to fail with "Execute returned results". Use
+        // $queryRawUnsafe which is allowed to return results and ignore them.
+        await prisma.$queryRawUnsafe(pragma)
+      } catch (error) {
+        // Fallback to executeRawUnsafe if queryRawUnsafe fails for a particular pragma
+        try {
+          await prisma.$executeRawUnsafe(pragma)
+        } catch (inner) {
+          console.warn('Pragma failed:', pragma, inner)
+        }
+      }
     }
     console.log('✅ SQLite optimizations applied')
   } catch (error) {
