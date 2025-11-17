@@ -34,10 +34,10 @@ export async function GET(req: NextRequest) {
       const clients = await prisma.user.findMany({
         where: {
           OR: [
-            { email: { contains: query, mode: 'insensitive' } },
-            { firstName: { contains: query, mode: 'insensitive' } },
-            { lastName: { contains: query, mode: 'insensitive' } },
-            { company: { contains: query, mode: 'insensitive' } },
+            { email: { contains: query } },
+            { firstName: { contains: query } },
+            { lastName: { contains: query } },
+            { company: { contains: query } },
           ],
           role: 'CLIENT'
         },
@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
       // Search invoices
       const invoices = await prisma.invoice.findMany({
         where: {
-          invoiceNumber: { contains: query, mode: 'insensitive' }
+          invoiceNumber: { contains: query }
         },
         include: { user: true },
         take: 5,
@@ -73,8 +73,8 @@ export async function GET(req: NextRequest) {
       const services = await prisma.service.findMany({
         where: {
           OR: [
-            { domain: { contains: query, mode: 'insensitive' } },
-            { username: { contains: query, mode: 'insensitive' } },
+            { domain: { contains: query } },
+            { username: { contains: query } },
           ]
         },
         include: { user: true, product: true },
@@ -92,7 +92,7 @@ export async function GET(req: NextRequest) {
       // Search products
       const products = await prisma.product.findMany({
         where: {
-          name: { contains: query, mode: 'insensitive' }
+          name: { contains: query }
         },
         take: 5,
       })
@@ -108,7 +108,7 @@ export async function GET(req: NextRequest) {
       // Search tickets
       const tickets = await prisma.ticket.findMany({
         where: {
-          subject: { contains: query, mode: 'insensitive' }
+          subject: { contains: query }
         },
         include: { user: true },
         take: 5,
@@ -126,7 +126,7 @@ export async function GET(req: NextRequest) {
       const invoices = await prisma.invoice.findMany({
         where: {
           userId: user.id,
-          invoiceNumber: { contains: query, mode: 'insensitive' }
+          invoiceNumber: { contains: query }
         },
         take: 5,
       })
@@ -143,8 +143,8 @@ export async function GET(req: NextRequest) {
         where: {
           userId: user.id,
           OR: [
-            { domain: { contains: query, mode: 'insensitive' } },
-            { username: { contains: query, mode: 'insensitive' } },
+            { domain: { contains: query } },
+            { username: { contains: query } },
           ]
         },
         include: { product: true },
@@ -162,7 +162,7 @@ export async function GET(req: NextRequest) {
       const tickets = await prisma.ticket.findMany({
         where: {
           userId: user.id,
-          subject: { contains: query, mode: 'insensitive' }
+          subject: { contains: query }
         },
         take: 5,
       })
