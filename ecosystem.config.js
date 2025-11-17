@@ -10,7 +10,7 @@ module.exports = {
     max_memory_restart: '500M',
     env: {
       NODE_ENV: 'production',
-      PORT: 8080,
+      PORT: 3000,
       // SQLite optimizations
       NODE_OPTIONS: '--max-old-space-size=512'
     },
