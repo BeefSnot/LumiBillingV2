@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "prebuild": "npm run prisma:generate && npx tsc --noEmit",
+    "ci": "npm ci && npm run prebuild && npm run lint",
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",

@@ -122,9 +122,9 @@ npm run prisma:seed
 print_success "Database seeded"
 
 echo ""
-echo "Step 5: Building application..."
+echo "Step 5: Build steps (pre-build checks and build)..."
 echo "-----------------------------------"
-
+npm run prebuild
 npm run build
 print_success "Application built successfully"
 

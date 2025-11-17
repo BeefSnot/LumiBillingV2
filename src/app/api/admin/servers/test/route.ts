@@ -25,11 +25,12 @@ export async function POST(req: NextRequest) {
         if (!username || !password) {
           return NextResponse.json({ error: 'Username and password required for DirectAdmin' }, { status: 400 })
         }
+        const apiVersionFinal = apiVersion === 'v1' ? 'v1' : 'v2'
         const daClient = new DirectAdminClient({ 
           apiUrl, 
           username, 
           password,
-          apiVersion: apiVersion || 'v2'
+          apiVersion: apiVersionFinal
         })
         result = await daClient.testConnection()
         break
