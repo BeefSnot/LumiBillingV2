@@ -57,7 +57,20 @@ fi
 
 # Install dependencies
 echo "Installing dependencies (this may take a while)..."
-npm ci
+if npm ci; then
+  echo "npm ci completed"
+else
+  echo "npm ci failed — package.json and package-lock.json may be out of sync."
+  echo "If you continue we'll run 'npm install --legacy-peer-deps' which updates package-lock.json." 
+  read -p "Allow updating package-lock.json with --legacy-peer-deps? (y/N) " choice
+  if [[ "$choice" =~ ^[Yy]$ ]]; then
+    npm install --legacy-peer-deps || { echo "npm install failed — aborting"; exit 1; }
+    echo "Updated package-lock.json via npm install --legacy-peer-deps" 
+  else
+    echo "Aborting install. To fix locally: run 'npm install' on your dev machine to regenerate package-lock.json and push it." 
+    exit 1
+  fi
+fi
 
 # Prisma client
 echo "Generating Prisma client..."
