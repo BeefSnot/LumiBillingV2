@@ -12,7 +12,7 @@ export async function GET() {
     }
 
     const templates = await prisma.emailTemplate.findMany({
-      orderBy: { type: 'asc' }
+      orderBy: { name: 'asc' }
     })
 
     return NextResponse.json({ templates })
@@ -29,18 +29,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { name, type, subject, body } = await req.json()
+    const { name, subject, body, variables } = await req.json()
 
-    if (!name || !type || !subject || !body) {
+    if (!name || !subject || !body) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
     const template = await prisma.emailTemplate.create({
       data: {
         name,
-        type,
         subject,
         body,
+        variables: variables || null,
         isActive: true,
       }
     })
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       entityId: template.id,
       userId: session.user.id,
       userEmail: session.user.email,
-      details: JSON.stringify({ templateName: name, type })
+      details: JSON.stringify({ templateName: name })
     })
 
     return NextResponse.json({ success: true, template })
