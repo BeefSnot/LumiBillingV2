@@ -11,8 +11,11 @@
     "lint": "next lint",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push --accept-data-loss",
+    "prisma:push:mysql": "prisma db push --schema=prisma/schema.mysql.prisma --accept-data-loss",
     "prisma:seed": "tsx prisma/seed.ts",
+    "prisma:seed:mysql": "PRISMA_SCHEMA=prisma/schema.mysql.prisma tsx prisma/seed.ts",
     "setup": "npm run prisma:generate && npm run prisma:push && npm run prisma:seed"
+    ,"migrate:sqlite-to-mysql":"bash prisma/migrate_sqlite_to_mysql.sh"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

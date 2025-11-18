@@ -36,9 +36,18 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
 })
 
+// Apply SQLite optimizations on startup — only if we're using SQLite.
+// In production with Postgres this should not run.
 // Apply SQLite optimizations on startup
+// Only run these when the datasource is actually SQLite. If you switched
+// Prisma to Postgres the optimizations and pragmas are not applicable and
+// will error — so detect the DB provider by checking DATABASE_URL.
 if (!globalForPrisma.prisma) {
-  optimizeSQLite(prisma).catch(console.error)
+  const databaseUrl = (process.env.DATABASE_URL || '').toLowerCase()
+  const isSqlite = databaseUrl.startsWith('file:') || databaseUrl.includes('sqlite')
+  if (isSqlite) {
+    optimizeSQLite(prisma).catch(console.error)
+  }
 }
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
