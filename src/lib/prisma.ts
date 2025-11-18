@@ -6,23 +6,29 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-// Show a friendly warning if the DATABASE_URL is set to 'localhost'. On many
-// Linux systems 'localhost' connects over a Unix socket which can trigger
-// different auth methods (peer) than a TCP connection — using 127.0.0.1
-// forces a TCP connection and usually resolves Prisma authentication issues.
-if (process.env.DATABASE_URL) {
+// On Linux (or any production), prefer using TCP (127.0.0.1) instead of
+// Unix socket 'localhost' when connecting to Postgres; socket auth can be
+// different and cause password-based authentication to fail. If DATABASE_URL
+// contains 'localhost' and we are in production, replace it at runtime with
+// 127.0.0.1 so build / prerender steps don't fail because of socket auth.
+if (
+  process.env.DATABASE_URL &&
+  process.env.NODE_ENV === 'production'
+) {
   try {
     const parsed = parseUrl(process.env.DATABASE_URL)
     const host = (parsed.hostname || '').toLowerCase()
     if (host === 'localhost') {
+      // Coerce to IPv4 loopback to force TCP auth
+      const fixed = process.env.DATABASE_URL.replace('@localhost', '@127.0.0.1')
       console.warn(
-        `⚠️  Your DATABASE_URL uses 'localhost' (\"${process.env.DATABASE_URL}\"). ` +
-          "If you're seeing authentication errors, change the host to '127.0.0.1' " +
-          "in the production .env to force a TCP connection (e.g. ")
+        `⚠️  DATABASE_URL used 'localhost' — forcing TCP loopback to '127.0.0.1'. ` +
+        `Using: ${fixed}`
       )
+      process.env.DATABASE_URL = fixed
     }
   } catch (err) {
-    // ignore parse failures — this is only a helpful warning
+    // Ignore parse failures — this change is only a runtime convenience
   }
 }
 

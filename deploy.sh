@@ -102,15 +102,9 @@ fi
 # Warn if DATABASE_URL uses 'localhost' (socket vs TCP auth can cause failures)
 if grep -E -q "postgres(q|ql)?://[^@]+@localhost" .env; then
     print_warning "DATABASE_URL uses 'localhost' — this can cause authentication issues because 'localhost' may use a Unix socket."
-    echo "It's usually safer to use 127.0.0.1 when connecting to Postgres from Prisma in production."
-    echo "Replace 'localhost' with '127.0.0.1' in your .env now? (y/N)"
-    read -r replace_db
-    if [ "$replace_db" = "y" ] || [ "$replace_db" = "Y" ]; then
-        sed -i 's/@localhost/@127.0.0.1/g' .env
-        print_success "Replaced localhost with 127.0.0.1 in .env"
-    else
-        print_warning "Leaving .env unchanged. If you get 'authentication failed' errors, change to 127.0.0.1."
-    fi
+    echo "If you're deploying on a Linux VPS and you see Prisma "
+    echo "authentication errors, update .env to use 127.0.0.1 instead of localhost."
+    echo "Example: postgres://lumiuser:pwd@127.0.0.1:5432/lumidb?schema=public"
 fi
 
 print_success "Environment configured"

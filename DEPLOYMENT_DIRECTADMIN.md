@@ -91,11 +91,7 @@ Add your configuration (copy from `.env.example` and fill in real values):
 ```env
 # Database - SQLite (file-based, no server needed)
 DATABASE_URL="file:./production.db"
-> Note: If you switch to Postgres for production, use 127.0.0.1 (IPv4) instead of `localhost` in your DATABASE_URL to avoid Unix socket auth issues that can cause "authentication failed" errors. Example:
->
-> ```
-> DATABASE_URL="postgresql://lumiuser:YOUR_PASSWORD@127.0.0.1:5432/lumidb?schema=public"
-> ```
+> Note: If you switch to Postgres for production, use `127.0.0.1` instead of `localhost` in your `DATABASE_URL` to force a TCP connection and avoid socket auth issues.
 
 # NextAuth - IMPORTANT: Change these!
 NEXTAUTH_URL="https://billing.yourdomain.com"
