@@ -17,6 +17,180 @@ datasource db {
 // Use `--schema=prisma/schema.mysql.prisma` with Prisma CLI commands to target
 // MySQL without changing your default Prisma schema (which may be sqlite).
 
+model Server {
+  id          String      @id @default(cuid())
+  name        String
+  hostname    String
+  ipAddress   String
+  type        String      // DIRECTADMIN, VIRTFUSION, PTERODACTYL
+  apiKey      String?
+  apiUrl      String
+  username    String?
+  password    String?
+  apiVersion  String?     @default("v2") // For DirectAdmin: v1 or v2
+  maxAccounts Int         @default(0)
+  active      Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  products    Product[]
+  services    Service[]
+
+  @@index([type])
+  @@index([active])
+}
+
+model Service {
+  id              String        @id @default(cuid())
+  userId          String
+  productId       String
+  serverId        String?
+  externalId      String?
+  domain          String?
+  username        String?
+  password        String?
+  status          String        @default("PENDING") // PENDING, ACTIVE, SUSPENDED, CANCELLED, TERMINATED
+  nextDueDate     DateTime
+  recurringAmount Float
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user            User          @relation(fields: [userId], references: [id])
+  product         Product       @relation(fields: [productId], references: [id])
+  server          Server?       @relation(fields: [serverId], references: [id])
+  provisions      Provision[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([nextDueDate])
+}
+
+model Invoice {
+  id          String        @id @default(cuid())
+  userId      String
+  invoiceNumber String      @unique
+  status      String        @default("UNPAID") // UNPAID, PAID, CANCELLED, REFUNDED
+  subtotal    Float
+  tax         Float         @default(0)
+  total       Float
+  dueDate     DateTime
+  paidDate    DateTime?
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  user        User          @relation(fields: [userId], references: [id])
+  items       InvoiceItem[]
+  transactions Transaction[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  description String
+  amount      Float
+  quantity    Int      @default(1)
+  createdAt   DateTime @default(now())
+
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+}
+
+model Transaction {
+  id            String   @id @default(cuid())
+  userId        String
+  invoiceId     String?
+  amount        Float
+  gateway       String   // stripe, manual, etc
+  transactionId String?  @unique
+  description   String?
+  createdAt     DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id])
+  invoice       Invoice? @relation(fields: [invoiceId], references: [id])
+
+  @@index([userId])
+  @@index([invoiceId])
+}
+
+model Ticket {
+  id          String         @id @default(cuid())
+  userId      String
+  subject     String
+  status      String         @default("OPEN") // OPEN, IN_PROGRESS, WAITING_CUSTOMER, RESOLVED, CLOSED
+  priority    String         @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  departmentId String?
+  assignedTo  String?        // Staff member assigned to this ticket
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  user        User           @relation(fields: [userId], references: [id])
+  department  Department?    @relation(fields: [departmentId], references: [id])
+  assignedStaff User?        @relation("AssignedTickets", fields: [assignedTo], references: [id])
+  replies     TicketReply[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([priority])
+  @@index([assignedTo])
+}
+
+model TicketReply {
+  id        String   @id @default(cuid())
+  ticketId  String
+  userId    String
+  message   String
+  isStaff   Boolean  @default(false)
+  attachments String? // JSON array of file paths
+  createdAt DateTime @default(now())
+
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([ticketId])
+  @@index([userId])
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  email       String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  tickets     Ticket[]
+}
+
+model Provision {
+  id        String          @id @default(cuid())
+  serviceId String
+  status    String          @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  attempts  Int             @default(0)
+  error     String?
+  data      String?         // JSON data for provisioning
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  service   Service         @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId])
+  @@index([status])
+}
+
+model Settings {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+
+  @@index([key])
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
