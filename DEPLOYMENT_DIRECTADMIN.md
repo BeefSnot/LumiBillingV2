@@ -91,6 +91,16 @@ Add your configuration (copy from `.env.example` and fill in real values):
 ```env
 # Database - SQLite (file-based, no server needed)
 DATABASE_URL="file:./production.db"
+
+Note: If you set `DATABASE_URL` to a MySQL/MariaDB connection string, prefer the following format and remove any surrounding quotes if you export the variable at the shell or set it via DirectAdmin configurations. Example for `.env`:
+
+DATABASE_URL=mysql://lumiuser:YOUR_PASSWORD@127.0.0.1:3306/lumidb
+
+If you export a shell variable directly in your environment, do NOT include surrounding quotes (they will become part of the value):
+
+export DATABASE_URL=mysql://lumiuser:YOUR_PASSWORD@127.0.0.1:3306/lumidb
+
+Use `npm run prisma:check-env` to see what Prisma will detect at runtime and avoid surprises.
 > Note: If you switch to Postgres for production, use `127.0.0.1` instead of `localhost` in your `DATABASE_URL` to force a TCP connection and avoid socket auth issues.
 
 # NextAuth - IMPORTANT: Change these!
@@ -151,6 +161,26 @@ npm run prisma:push
 
 # Seed initial data (admin user, etc.)
 npm run prisma:seed
+
+If you're using MySQL/MariaDB, prefer the explicit MySQL commands provided in `package.json` and validate your environment first:
+
+```bash
+# Check what Prisma sees
+npm run prisma:check-env
+
+# Push schema using MySQL-specific schema file
+npm run prisma:push:mysql
+
+# Seed using MySQL schema
+npm run prisma:seed:mysql
+```
+
+If you prefer to run one-off commands, pass the URL inline so you know the runtime env Prisma sees:
+
+```bash
+DATABASE_URL=mysql://user:pass@23.150.24.24:3306/dbname npx prisma db push --schema=prisma/schema.mysql.prisma
+DATABASE_URL=mysql://user:pass@23.150.24.24:3306/dbname npx prisma db seed --schema=prisma/schema.mysql.prisma
+```
 ```
 
 **Default Admin Credentials** (change after first login!):
@@ -405,6 +435,40 @@ ping billing.yourdomain.com
 - Check document root is correct
 
 ### Permissions issues
+### PM2: "Cannot find module '/var/www/...' .next/standalone/server.js"
+
+If you see logs like `Cannot find module '/var/www/lumibilling/.next/standalone/server.js'`, this means PM2 is trying to run Next's standalone server but it doesn't exist. Possible reasons and fixes:
+
+- The `next build` step failed or produced files in a different location — re-run `npm run build` and confirm `.next/standalone/server.js` exists:
+  ```bash
+  # From your app directory
+  NODE_ENV=production npm run build
+  ls -la .next/standalone
+  # You should see server.js or similar inside
+  ```
+
+- If you are using the ecosystem file, restart the app with the fresh config (this ensures pm2 picks up `npm start` instead of a manual node /server path):
+  ```bash
+  pm2 delete lumi-billing || true
+  pm2 start ecosystem.config.js
+  pm2 save
+  ```
+
+- To check the environment that PM2 is using (which can affect Prisma):
+  ```bash
+  pm2 env lumi-billing
+  pm2 show lumi-billing
+  ```
+
+- After updating `.env`, always use `--update-env` when restarting to force pm2 to pick up new values:
+  ```bash
+  pm2 restart lumi-billing --update-env
+  ```
+
+If `ls -la .next/standalone` shows nothing or the folder doesn't exist, rerun the build and ensure `output: 'standalone'` is in `next.config.js` (it is by default in this repo). If you're still stuck, try starting with `npm start` manually to see verbose errors:
+```bash
+NODE_ENV=production npm start
+``` 
 ```bash
 # Fix ownership
 chown -R username:username /home/username/domains/yourdomain.com/billing

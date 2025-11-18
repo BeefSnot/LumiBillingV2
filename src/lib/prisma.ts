@@ -11,6 +11,15 @@ const globalForPrisma = globalThis as unknown as {
 // different and cause password-based authentication to fail. If DATABASE_URL
 // contains 'localhost' and we are in production, replace it at runtime with
 // 127.0.0.1 so build / prerender steps don't fail because of socket auth.
+// Normalize DATABASE_URL, trim surrounding quotes (" or ') and whitespace
+if (process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = process.env.DATABASE_URL.trim()
+  if ((process.env.DATABASE_URL.startsWith('"') && process.env.DATABASE_URL.endsWith('"')) ||
+      (process.env.DATABASE_URL.startsWith("'") && process.env.DATABASE_URL.endsWith("'"))) {
+    process.env.DATABASE_URL = process.env.DATABASE_URL.slice(1, -1)
+  }
+}
+
 if (
   process.env.DATABASE_URL &&
   process.env.NODE_ENV === 'production'
@@ -43,7 +52,8 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient({
 // Prisma to Postgres the optimizations and pragmas are not applicable and
 // will error — so detect the DB provider by checking DATABASE_URL.
 if (!globalForPrisma.prisma) {
-  const databaseUrl = (process.env.DATABASE_URL || '').toLowerCase()
+  // Ensure the effective DATABASE_URL does not contain surrounding quotes
+  const databaseUrl = (process.env.DATABASE_URL || '').toLowerCase().trim()
   const isSqlite = databaseUrl.startsWith('file:') || databaseUrl.includes('sqlite')
   if (isSqlite) {
     optimizeSQLite(prisma).catch(console.error)

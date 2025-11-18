@@ -11,6 +11,7 @@
     "lint": "next lint",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push --accept-data-loss",
+    "prisma:check-env": "tsx prisma/check-env.ts",
     "prisma:push:mysql": "prisma db push --schema=prisma/schema.mysql.prisma --accept-data-loss",
     "prisma:seed": "tsx prisma/seed.ts",
     "prisma:seed:mysql": "PRISMA_SCHEMA=prisma/schema.mysql.prisma tsx prisma/seed.ts",

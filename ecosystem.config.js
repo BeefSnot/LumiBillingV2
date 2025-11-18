@@ -14,6 +14,8 @@ module.exports = {
       // SQLite optimizations
       NODE_OPTIONS: '--max-old-space-size=512'
     },
+    // Load .env automatically so PM2 restarts pick up same env variables
+    env_file: '.env',
     error_file: './logs/err.log',
     out_file: './logs/out.log',
     log_file: './logs/combined.log',
