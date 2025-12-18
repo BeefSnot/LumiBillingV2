@@ -1,6 +1,6 @@
 # Lumi Billing
 
-A modern, full-featured billing panel for Lumi Solutions - similar to WHMCS and Blesta, but built with cutting-edge technologies.
+A modern, full-featured billing panel for Lumi Solutions - similar to WHMCS and Blesta, but built with cutting-edge technologies. (WORK IN PROGRESS) DO NOT DOWNLOAD YET. 
 
 ## Features
 
@@ -93,3 +93,4 @@ Built for [Lumi Solutions](https://lumisolutions.tech)
 ## License
 
 Proprietary - All rights reserved
+
